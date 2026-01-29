@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Budget | Teen Tracker</title>
+    <!-- Importing Inter Font to match the professional look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --input-bg: #2b2b2b;
+            --text-main: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-gradient: linear-gradient(135deg, #8a2be2 0%, #ff007f 100%); /* Purple to Pink */
+            --green-accent: #00e676;
+            --red-accent: #ff5252;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* --- CONTAINER (The Card) --- */
+        .app-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1, h2 {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+        }
+
+        .gradient-text {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        p { color: var(--text-secondary); font-size: 14px; margin-bottom: 30px; line-height: 1.5; }
+
+        /* --- FORMS & INPUTS --- */
+        .input-group { margin-bottom: 15px; }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--input-bg);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            transition: 0.3s;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #8a2be2;
+            background-color: #222;
+        }
+
+        /* --- BUTTONS --- */
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 50px; /* Pill shape like Mosh */
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(138, 43, 226, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 15px;
+            display: block;
+            text-align: center;
+            border: none;
+        }
+
+        /* --- DASHBOARD STYLES --- */
+        .balance-card {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #333;
+        }
+
+        .balance-amount {
+            font-size: 42px;
+            font-weight: 800;
+            margin-top: 5px;
+        }
+
+        .transaction-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .transaction-list::-webkit-scrollbar { width: 5px; }
+        .transaction-list::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+
+        .t-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #252525;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            animation: slideIn 0.4s ease forwards;
+            border-left: 4px solid transparent;
+        }
+
+        .t-item.income { border-left-color: var(--green-accent); }
+        .t-item.expense { border-left-color: var(--red-accent); }
+
+        .t-info strong { display: block; font-size: 15px; margin-bottom: 3px; }
+        .t-info small { font-size: 12px; color: #666; }
+        .t-amt { font-weight: 700; font-size: 15px; }
+
+        .delete-btn {
+            background: none; border: none; color: #555; cursor: pointer; font-size: 18px; margin-left: 10px;
+            transition: 0.2s;
+        }
+        .delete-btn:hover { color: var(--red-accent); }
+
+        .hidden { display: none; }
+
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logout-btn { background: #333; color: white; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .logout-btn:hover { background: #444; }
+
+    </style>
+</head>
+<body>
+
+<!-- SECTION 1: LOGIN / REGISTER -->
+<div class="app-container" id="auth-section">
+    <h1 class="gradient-text" id="auth-title">Welcome Back</h1>
+    <p id="auth-desc">Master your money. Track your future.</p>
+
+    <div class="input-group">
+        <input type="text" id="username" placeholder="Username" style="display:none;">
+    </div>
+    <div class="input-group">
+        <input type="email" id="email" placeholder="Email Address">
+    </div>
+    <div class="input-group">
+        <input type="password" id="password" placeholder="Password">
+    </div>
+
+    <button class="btn-primary" onclick="handleAuth()" id="auth-btn">Login</button>
+    <button class="btn-secondary" onclick="toggleAuth()">New user? Create an account</button>
+</div>
+
+<!-- SECTION 2: DASHBOARD -->
+<div class="app-container hidden" id="dashboard-section">
+    <div class="header-row">
+        <h2 class="gradient-text">My Wallet</h2>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="balance-card">
+        <div style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Current Balance</div>
+        <div class="balance-amount" id="balance-display">$0.00</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <input type="text" id="trans-desc" placeholder="What did you buy?">
+        <input type="number" id="trans-amount" placeholder="Value (-20)">
+    </div>
+    <button class="btn-primary" onclick="addTransaction()">Add Transaction</button>
+
+    <h3 style="margin-top: 30px; font-size: 18px;">Recent History</h3>
+    <ul class="transaction-list" id="transaction-list">
+        <!-- Transactions injected by JS -->
+    </ul>
+</div>
+
+<!-- JAVASCRIPT LOGIC -->
+<script>
+    const API_BASE = "/api";
+    let isLoginMode = true;
+    let currentUserId = null;
+
+    // UI TOGGLE
+    function toggleAuth() {
+        isLoginMode = !isLoginMode;
+        const title = document.getElementById('auth-title');
+        const btn = document.getElementById('auth-btn');
+        const toggle = document.querySelector('.btn-secondary');
+        const userField = document.getElementById('username');
+
+        if (isLoginMode) {
+            title.innerText = "Welcome Back";
+            btn.innerText = "Login";
+            toggle.innerText = "New user? Create an account";
+            userField.style.display = "none";
+        } else {
+            title.innerText = "Join the Squad";
+            btn.innerText = "Create Account";
+            toggle.innerText = "Already have an account? Login";
+            userField.style.display = "block";
+        }
+    }
+
+    // AUTH LOGIC
+    async function handleAuth() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const username = document.getElementById('username').value;
+
+        if (!email || !password) return alert("Please fill in all fields");
+
+        if (isLoginMode) {
+            try {
+                const res = await fetch(`${API_BASE}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                if (res.ok) {
+                    const user = await res.json();
+                    enterDashboard(user);
+                } else {
+                    alert("Invalid credentials.");
+                }
+            } catch (e) { alert("Backend not connected."); }
+        } else {
+            try {
+                const res = await fetch(`${API_BASE}/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                if (res.ok) {
+                    alert("Account created! Please login.");
+                    toggleAuth();
+                } else {
+                    alert("Error registering.");
+                }
+            } catch (e) { alert("Backend error."); }
+        }
+    }
+
+    function enterDashboard(user) {
+        currentUserId = user.id;
+        document.getElementById('auth-section').classList.add('hidden');
+        document.getElementById('dashboard-section').classList.remove('hidden');
+        loadData();
+    }
+
+    function logout() {
+        location.reload(); // Simple reload to clear state
+    }
+
+    // DASHBOARD LOGIC
+    async function loadData() {
+        if (!currentUserId) return;
+
+        // Fetch Balance
+        const balRes = await fetch(`${API_BASE}/transactions/balance/${currentUserId}`);
+        const bal = await balRes.json();
+        const balEl = document.getElementById('balance-display');
+        balEl.innerText = `$${bal.toFixed(2)}`;
+        balEl.style.color = bal < 0 ? '#ff5252' : '#ffffff';
+
+        // Fetch Transactions
+        const listRes = await fetch(`${API_BASE}/transactions/user/${currentUserId}`);
+        const data = await listRes.json();
+        const list = document.getElementById('transaction-list');
+        list.innerHTML = "";
+
+        data.forEach((t, index) => {
+            const li = document.createElement('li');
+            const isExpense = t.amount < 0;
+            li.className = `t-item ${isExpense ? 'expense' : 'income'}`;
+            // Stagger animation
+            li.style.animationDelay = `${index * 0.1}s`;
+
+            li.innerHTML = `
+                    <div class="t-info">
+                        <strong>${t.description}</strong>
+                        <small>${t.date || 'Today'}</small>
+                    </div>
+                    <div style="display:flex; align-items:center;">
+                        <span class="t-amt" style="color: ${isExpense ? '#ff5252' : '#00e676'}">
+                            ${t.amount > 0 ? '+' : ''}${t.amount}
+                        </span>
+                        <button class="delete-btn" onclick="deleteTrans(${t.id})">&times;</button>
+                    </div>
+                `;
+            list.prepend(li); // Newest top
+        });
+    }
+
+    async function addTransaction() {
+        const desc = document.getElementById('trans-desc').value;
+        const amt = document.getElementById('trans-amount').value;
+
+        if (!desc || !amt) return alert("Fill in details!");
+
+        const res = await fetch(`${API_BASE}/transactions/${currentUserId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description: desc, amount: parseFloat(amt) })
+        });
+
+        if (res.ok) {
+            document.getElementById('trans-desc').value = "";
+            document.getElementById('trans-amount').value = "";
+            loadData();
+        } else {
+            alert("Transaction Failed! (You might be broke)");
+        }
+    }
+
+    async function deleteTrans(id) {
+        if(confirm("Delete this?")) {
+            await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' });
+            loadData();
+        }
+    }
+</script>
+</body>
+</html>
